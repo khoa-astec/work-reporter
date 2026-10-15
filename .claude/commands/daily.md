@@ -1,4 +1,4 @@
 ---
-description: Report today's changes and write them into today's 業務 in the Kintone weekly record
+description: 今日の実績（業務）を Kintone の週報に書きます
 ---
-Run the daily sync from CLAUDE.md: collect changes since `last_run`, write today's 〇曜日の業務 in the weekly record, and list Backlog / points drafts for me to approve. $ARGUMENTS
+CLAUDE.md の手順で `last_run` 以降の変更を集め、今週の週報の今日の `〇曜日の業務` に書きます。Backlog やポイント申請は下書きとして出し、私の承認を待ちます。$ARGUMENTS

@@ -1,9 +1,9 @@
-# Local config — copy to `config.local.md` and fill in
+# 個人設定（`/setup` が `config.local.md` として作成します。git には入りません）
 
-- Backlog project key: `<KEY>`
-- GitHub org: `<org>`
-- Local repos:
-  - `<path/to/repo>`
-- Kintone weekly record app: `<app id>` (weekly-record tool, if your Kintone MCP has one: `<tool name>`)
-- Points apps: 職遂 `<id>`, 改善 `<id>`, 知識 `<id>`, AI `<id>`; master `<id>`
-- AI adoption post channel: `<Teams team › channel>`
+- Backlog プロジェクトキー：`<KEY>`
+- GitHub org：`<org>`
+- ローカルのリポジトリ：
+  - `<リポジトリのパス>`
+- Kintone 週報アプリID：`<アプリID>`（週報用のツールがあれば：`<ツール名>`）
+- ポイントアプリID：職遂 `<id>`、改善 `<id>`、知識 `<id>`、AI `<id>`、マスター `<id>`
+- AI 活用の投稿先：`<Teams のチーム › チャンネル>`

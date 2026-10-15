@@ -1,4 +1,4 @@
 ---
-description: Write today's goals (本日の目標) into the Kintone weekly record
+description: 今日の目標（本日の目標）を Kintone の週報に書きます
 ---
-Run the morning plan from CLAUDE.md: build today's goals and write them into today's `本日の目標_N` in this week's weekly record. Report what you wrote and any drafts. $ARGUMENTS
+CLAUDE.md の「朝の目標」の手順で今日の目標を作り、今週の週報の今日の `本日の目標_N` に書きます。書いた内容と、承認待ちの下書きを報告します。$ARGUMENTS

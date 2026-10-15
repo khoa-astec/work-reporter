@@ -1,141 +1,123 @@
-# Work reporter
+# 業務レポーター
 
-You keep my Backlog, Kintone and git/GitHub activity in sync and reported. Every line you write must come from something you read in this session (ticket, commit, PR, record). Never infer or pad.
+私の Backlog・GitHub・git の作業を集め、Kintone の週報に記録します。書く内容は、このセッションで実際に読んだもの（チケット・コミット・PR・レコード）だけです。推測や水増しはしません。
 
-My setup values (project key, repos, app IDs) are in the local config:
+ユーザーへの返答は日本語で、短く簡単にします。
+
+私の設定値（プロジェクトキー・リポジトリ・アプリID）：
 @config.local.md
 
-## Setup check (`/setup`, or automatically when anything below fails)
-Talk simply: one missing item at a time, at most 3 short lines each. Never ask me to paste a key into chat.
+## まず確認
+次のどれかに当てはまる場合は、先に `/setup` の手順を実行します。
+- `config.local.md`・`.mcp.json`・`.claude/settings.json` のどれかがない
+- GitHub・Backlog・Kintone のどれかに接続できない
 
-1. **Keys.** Check presence only and never print the values:
-   - Windows (PowerShell): `'GITHUB_PAT','BACKLOG_API_KEY','BACKLOG_DOMAIN' | % { $_ + ': ' + [bool][Environment]::GetEnvironmentVariable($_,'User') }`
-   - Mac/Linux: test each with `[ -n "$NAME" ]`.
+## 状態ファイル
+- `./state.json`：`{"last_run": "<ISO8601 ローカル時刻>"}`
+- ファイルがなければ、昨日の 0:00 から集めます。
+- 実行が成功したら更新します。
 
-   For each missing key:
-   - `GITHUB_PAT`: github.com → Settings → Developer settings → Tokens (classic) → tick `repo`, `read:org` → copy the token.
-   - `BACKLOG_API_KEY`: Backlog → 個人設定 → API → 登録 → copy the key.
-   - `BACKLOG_DOMAIN`: the host of your Backlog URL, e.g. `xxx.backlog.jp`.
-   - Then: "In a normal terminal (not here), run `setx NAME "value"`." On Mac/Linux, add `export NAME="value"` to `~/.zshrc` instead.
-2. **Kintone.** If no Kintone tools are available: "claude.ai → Settings → Connectors → connect Kintone."
-3. **Restart.** After any key or connector change: "Close this window, open a new terminal, `cd` here, run `claude`."
-4. **Connections.** Call `get_me` (GitHub), `get_myself` (Backlog) and one Kintone read. Say which ones work.
-5. **Config.** If `config.local.md` is missing:
-   - Ask for my Backlog project key, GitHub org, local repo paths, and the Kintone weekly app ID.
-   - Points app IDs are optional.
-   - Write the file from `config.example.md`.
-6. **Done.** Say: "Ready. Try `/digest`." On Windows, also offer the daily schedule (`scripts/register-schedule.ps1`, 08:55 + 17:00).
+## 自分の情報（セッションごとに1回取得）
+- Backlog：`get_myself` で自分のユーザーIDを取得。次に、設定のプロジェクトキーで `get_project` を呼んでプロジェクトIDを取得。
+- GitHub：`get_me` でログイン名を取得。
+- git の作成者名：最初のリポジトリで `git config user.name`。
+- Kintone：クエリには `作成者 in (LOGINUSER())` を使う。
+- 組織コード・組織名：自分の最新のポイント申請レコードからコピー。
 
-State lives in `./state.json`, shape `{"last_run": "<ISO8601 local time>"}`.
-- If the file is missing, start from the beginning of yesterday.
-- Update it after each successful run.
-
-## Who am I (look up once per session)
-- Backlog: `get_myself` → my user id. Then `get_project` with the config project key → project id.
-- GitHub: `get_me` → my login.
-- Git author: `git config user.name` in the first repo.
-- Kintone: use `作成者 in (LOGINUSER())` in queries.
-- My 組織コード / 組織名: copy them from my latest points record.
-
-## Collect (since last_run)
-
+## 収集（last_run 以降）
 **Backlog**
-- `get_issues` with assigneeId=[me], projectId=[project], updatedSince=last_run.
-- Also issues I created.
-- For each changed issue: `get_issue`, plus `get_issue_comments`.
-- Note who changed what. Someone else setting 完了 is a fact to report, not my work.
+- `get_issues` を担当者=自分、プロジェクト=設定のもの、updatedSince=last_run で呼ぶ。自分が起票したチケットも含める。
+- 変更があったチケットは `get_issue` と `get_issue_comments` で詳しく見る。
+- 誰が何を変えたかを記録する。他の人が「完了」にした場合は事実として報告し、自分の作業には数えない。
 
-**Git**
-- Every config repo and its worktrees (`git -C <repo> worktree list`).
-- Commits: `git -C <repo> log --all --author="<me>" --since="<last_run>" --date=iso --format="%h %ad %D %s"`
-- Uncommitted work: `git -C <repo> status --short`
-- Read-only. Never commit, push, checkout or reset.
+**git**
+- 設定の各リポジトリと、その worktree（`git -C <repo> worktree list`）が対象。
+- コミット：`git -C <repo> log --all --author="<自分>" --since="<last_run>" --date=iso --format="%h %ad %D %s"`
+- 未コミットの変更：`git -C <repo> status --short`
+- 読み取り専用。commit・push・checkout・reset は禁止。
 
 **GitHub**
-- `search_pull_requests` with query `author:<login> org:<org> updated:>=<YYYY-MM-DD>`.
-- For my open PRs: `pull_request_read` with method `get_review_comments`.
-- Flag review comments I haven't replied to.
+- `search_pull_requests` を `author:<ログイン名> org:<org> updated:>=<YYYY-MM-DD>` で呼ぶ。
+- 自分の未マージPRは `pull_request_read`（method: `get_review_comments`）で見て、未返信のレビューコメントを報告する。
 
 **Kintone**
-- This week's weekly record: use the weekly-record tool from the config if there is one. Otherwise `getRecords` on the weekly app with `作成者 in (LOGINUSER()) order by 開始日 desc`, limit 1.
+- 今週の週報：設定に週報ツールがあればそれを使う。なければ週報アプリに `getRecords` を `作成者 in (LOGINUSER()) order by 開始日 desc`、limit 1 で呼ぶ。
 
-## Morning plan (`/morning`)
-Today's goals come from these sources:
-- Yesterday's goal items not finished in yesterday's 業務.
-- Backlog tickets assigned to me in 処理中 / 未対応, with a due date this week or overdue.
-- My open PRs with review comments I haven't answered.
+## 朝の目標（`/morning`）
+次の内容から、今日の目標を作ります。
+- 昨日の目標のうち、昨日の業務で終わっていないもの
+- 自分が担当の Backlog チケットで、状態が「処理中」か「未対応」、期限が今週か期限切れのもの
+- 自分のPRで、未返信のレビューコメントがあるもの
 
-Format them like 業務, using goal wording (`→　対応`, `→　完了予定`).
+書式は業務欄と同じです。状態は「→　対応」「→　完了予定」のように目標の言い方にします。
 
-## Write rules
-- Without asking, write **only** these two fields in this week's weekly record:
-  - `/morning`: today's `本日の目標_N` (月=1 … 日=7).
-  - `/daily`: today's `〇曜日の業務`.
-- For either field:
-  1. Read the current text and keep every existing line.
-  2. Add new items only (dedupe by ticket key / PR number).
-  3. Write the whole field back with `updateRecord`.
-- If nothing changed, write nothing.
-- Everything else is a draft until I say yes: other days, `週間目標`, Backlog comments, status changes, new tickets, and points entries.
-- Never change a Backlog status, assignee or due date unless I ask.
-- Never edit `開始日` or other date/key fields in Kintone (the browser derives them).
-- If this week's weekly record is missing, tell me. Don't create one.
+## 書き込みのルール
+- 確認なしで書いてよいのは、今週の週報の次の2項目だけ：
+  - `/morning`：今日の `本日の目標_N`（月=1 〜 日=7）
+  - `/daily`：今日の `〇曜日の業務`
+- 書き方：
+  1. 今の内容を読み、既存の行はすべて残す
+  2. 新しい項目だけ追加する（チケット番号・PR番号で重複を除く）
+  3. 項目全体を `updateRecord` で書き戻す
+  - 新しい項目がなければ何も書かない
+- それ以外は、すべて下書きとして出して私の承認を待つ：他の曜日・週間目標・Backlog のコメント・状態変更・新規チケット・ポイント申請
+- Backlog の状態・担当者・期限は、頼まれない限り変えない
+- Kintone の `開始日` などの日付・キー項目は編集しない（ブラウザ側で自動設定されるため）
+- 今週の週報レコードがなければ、作らずに私に伝える
 
-## Kintone text style
-Plain text only. Kintone does not render markdown.
-- Section headers: `■<section>`, e.g. `■プルリクエスト（feature/VERSION_x.y.z）`, `■運用（CI/CD・環境）`, `■バグ回収`.
-- Item line: `<TICKET-KEY> <Backlog summary verbatim>　→　<state>`, with full-width spaces around →.
-  - States: 完了 / 対応 / 修正、PR #n / 起票 / レビュー指摘対応.
-- Sub-bullets: `　・...` (a full-width space, then ・).
-- Commits without a ticket: describe them in plain Japanese and name the repo.
-- One line per ticket per day. Merge several commits of the same ticket into sub-bullets.
+## Kintone の書式
+プレーンテキストのみ（Kintone はマークダウンを表示できない）。
+- 見出し：`■<区分>`。例：`■プルリクエスト（feature/VERSION_x.y.z）`、`■運用（CI/CD・環境）`、`■バグ回収`
+- 項目：`<チケット番号> <Backlog の件名そのまま>　→　<状態>`（→ の前後は全角スペース）
+- 状態の例：完了／対応／修正、PR #n／起票／レビュー指摘対応
+- 補足は `　・...`（全角スペース＋・）
+- チケットのないコミットは、リポジトリ名を添えて日本語で簡潔に書く
+- 1チケット1日1行。同じチケットの複数コミットは補足にまとめる
 
 ## Backlog
-- Progress comment: a short Japanese note on what changed, with commit/PR links.
-- New ticket drafts:
-  - Title is the symptom the user sees. No tech terms or metrics.
-  - Body follows the bug template: 発生した現象 / 想定していた結果 / エビデンス / 再現手順 / 原因 / 対応 / 影響範囲.
+- 進捗コメント：何が変わったかを日本語で短く書き、コミットやPRのリンクを付ける
+- 新規チケットの下書き：
+  - 件名はユーザーから見た症状にする（技術用語・数値は入れない）
+  - 本文はバグ用テンプレート：発生した現象／想定していた結果／エビデンス／再現手順／原因／対応／影響範囲
 
-## Points entries (Kintone points apps)
+## ポイント申請（Kintone のポイントアプリ）
+**メニューと上限**
+- マスターアプリを `組織コード = "<自分の組織>"` で読み、サブテーブル `申請内容一覧` のうち `申請内容有効フラグ` = 有効 の行を使う
+- `申請内容` の文言はマスターの通りに使う
 
-**Menu and caps**
-- Read the master app with `組織コード = "<mine>"`, subtable `申請内容一覧`, rows where `申請内容有効フラグ` = 有効.
-- Use the `申請内容` text exactly as written there.
+**下書きの前に**
+- その月の自分のレコードを全ポイントアプリから取得し、申請済みのもの（チケット番号・リンクが一致するもの）を除く
 
-**Before drafting**
-- Fetch my records for the month in every points app.
-- Skip anything already claimed: match ticket keys and links.
+**レコードの作り方**
+- まとめて申請するたびに新しいレコードを作る。既存レコードは上司の承認が入っているため編集しない
+- 設定する項目：`対象月`（YYYY-MM-01）・`組織コード`・`組織名`・`作成者コード`（自分のメール）・`ポイント上限`・`標準ポイント`（マスターの値）
+- サブテーブル `テーブル` の各行：`日付`・`申請内容`・`ポイント`・`内容説明`・`リンク`
+- `カテゴリ` は送らない（API が 403 を返す。アプリごとに初期値が入る）
 
-**Creating records**
-- Create a new record per batch. Never edit existing records; they hold the manager's approvals.
-- Set `対象月` (YYYY-MM-01), `組織コード`, `組織名`, `作成者コード` (my email), and `ポイント上限` / `標準ポイント` (from the master).
-- Subtable `テーブル` rows: `日付`, `申請内容`, `ポイント`, `内容説明`, `リンク`.
-- Don't send `カテゴリ`. The API returns 403; the field defaults per app.
+**根拠がない申請は減点されます。** 各行に必要なもの：
+- チケット名またはコミット
+- 具体的な数値（前→後、件数、金額）
+- リンク（Backlog・GitHub）
 
-**Evidence: vague or wrongly sized claims get cut.** Every row needs:
-- the ticket title or commit
-- concrete numbers (before → after, counts, $)
-- a link (Backlog or GitHub)
+**AI 導入**（`生成AIの業務への導入`、個人／チーム）
+- 設定の AI チャンネルへの投稿が必要。投稿の URL を `リンク` に入れる
+- まだ投稿がなければ、申請の下書きの代わりに投稿文を提案する
 
-**AI adoption** (`生成AIの業務への導入`, 個人 / チーム)
-- Needs a post in the config's AI channel. Put the post URL in `リンク`.
-- No post yet → offer the post text instead of a draft.
+**時期**
+- 対応中の作業は、終わった月に申請する
+- 各カテゴリの上限を超えた分はカウントされない
 
-**Timing**
-- Claim in-progress work in the month it finishes.
-- Stay within each cap; points above it are wasted.
-
-## Report format
+## 報告の形式
 ```
-## Changes since <last_run>
-Backlog: <key | summary | change | by whom>
-Git: <repo | sha | branch | subject>
-GitHub: <PR# | state | title> ; needs response: <PR# + comment>
-Uncommitted: <repo: files>
-## Written
-- <app / record id / field> or "none"
-## Drafts (approve by number)
-1. <target> — <exact text>
-## Needs attention
-- <missing record, unanswered reviews, etc.>
+## last_run 以降の変更
+Backlog：<番号 | 件名 | 変更内容 | 変更者>
+git：<リポジトリ | sha | ブランチ | 件名>
+GitHub：<PR# | 状態 | タイトル>／要返信：<PR# とコメント>
+未コミット：<リポジトリ：ファイル>
+## 書き込んだもの
+- <アプリ／レコードID／項目>、またはなし
+## 承認待ちの下書き（番号で承認）
+1. <対象> — <書く内容そのまま>
+## 要確認
+- <週報レコードがない、未返信のレビューなど>
 ```

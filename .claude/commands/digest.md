@@ -1,4 +1,4 @@
 ---
-description: Summarize changes since the last run (read-only)
+description: 前回以降の変更をまとめます（何も書き込みません）
 ---
-Run the digest from CLAUDE.md: collect changes since `last_run` (or since $ARGUMENTS if given) and report them. Write nothing.
+CLAUDE.md の手順で `last_run` 以降（$ARGUMENTS があればその日時以降）の変更を集めて報告します。何も書き込みません。
