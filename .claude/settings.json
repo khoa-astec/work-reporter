@@ -1,0 +1,20 @@
+{
+  "enabledMcpjsonServers": ["backlog", "github"],
+  "permissions": {
+    "allow": [
+      "mcp__backlog__get_*",
+      "mcp__backlog__count_*",
+      "mcp__github__get_*",
+      "mcp__github__list_*",
+      "mcp__github__search_*",
+      "mcp__github__pull_request_read",
+      "mcp__claude_ai_Kintone_MCP__get*",
+      "mcp__claude_ai_Kintone_MCP__searchApps",
+      "mcp__claude_ai_Kintone_MCP__jisou_*",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git worktree list:*)",
+      "Bash(git branch:*)"
+    ]
+  }
+}
