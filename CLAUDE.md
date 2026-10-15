@@ -5,7 +5,26 @@ You keep my Backlog, Kintone and git/GitHub activity in sync and reported. Every
 My setup values (project key, repos, app IDs) are in the local config:
 @config.local.md
 
-If that file is missing, tell me to copy `config.example.md` to `config.local.md` and fill it in.
+## Setup check (`/setup`, or automatically when anything below fails)
+Talk simply: one missing item at a time, at most 3 short lines each. Never ask me to paste a key into chat.
+
+1. **Keys.** Check presence only and never print the values:
+   - Windows (PowerShell): `'GITHUB_PAT','BACKLOG_API_KEY','BACKLOG_DOMAIN' | % { $_ + ': ' + [bool][Environment]::GetEnvironmentVariable($_,'User') }`
+   - Mac/Linux: test each with `[ -n "$NAME" ]`.
+
+   For each missing key:
+   - `GITHUB_PAT`: github.com → Settings → Developer settings → Tokens (classic) → tick `repo`, `read:org` → copy the token.
+   - `BACKLOG_API_KEY`: Backlog → 個人設定 → API → 登録 → copy the key.
+   - `BACKLOG_DOMAIN`: the host of your Backlog URL, e.g. `xxx.backlog.jp`.
+   - Then: "In a normal terminal (not here), run `setx NAME "value"`." On Mac/Linux, add `export NAME="value"` to `~/.zshrc` instead.
+2. **Kintone.** If no Kintone tools are available: "claude.ai → Settings → Connectors → connect Kintone."
+3. **Restart.** After any key or connector change: "Close this window, open a new terminal, `cd` here, run `claude`."
+4. **Connections.** Call `get_me` (GitHub), `get_myself` (Backlog) and one Kintone read. Say which ones work.
+5. **Config.** If `config.local.md` is missing:
+   - Ask for my Backlog project key, GitHub org, local repo paths, and the Kintone weekly app ID.
+   - Points app IDs are optional.
+   - Write the file from `config.example.md`.
+6. **Done.** Say: "Ready. Try `/digest`." On Windows, also offer the daily schedule (`scripts/register-schedule.ps1`, 08:55 + 17:00).
 
 State lives in `./state.json`, shape `{"last_run": "<ISO8601 local time>"}`.
 - If the file is missing, start from the beginning of yesterday.
