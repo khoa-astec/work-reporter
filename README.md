@@ -20,9 +20,31 @@ A Claude Code workspace that reads your Backlog tickets, GitHub PRs and local gi
      ```
 
 ## Use
+- `/morning`: writes today's goals (本日の目標) into the Kintone weekly record.
+- `/daily`: reports what changed and writes today's results (業務). Everything else comes back as drafts.
 - `/digest`: what changed since the last run. Read-only.
-- `/daily`: the digest, plus today's 業務 written into the Kintone weekly record. Everything else comes back as drafts.
 - `/points 2026-10`: drafts point entries, checked against what you've already claimed.
-- `/loop 24h /daily`: runs the daily sync automatically while the session stays open.
 
-Reads run without prompts. Writes (Kintone records, Backlog comments) ask for permission each time.
+In an interactive session, reads run without prompts and writes ask for permission each time.
+
+## Schedule (Windows)
+Run `/digest` once interactively first. That trusts the folder and checks the connections. Then:
+```
+powershell -ExecutionPolicy Bypass -File scripts\register-schedule.ps1
+```
+This registers two tasks:
+
+| Task | Time | Runs |
+|---|---|---|
+| `work-reporter-morning` | 08:55 every day | `/morning` |
+| `work-reporter-evening` | 17:00 every day | `/daily` |
+
+How the scheduled runs behave:
+- They run only while you're logged on. A run missed while the PC was off starts when it's back.
+- They are headless (`claude -p`, `--permission-mode dontAsk`). The only write they can make is the Kintone record update, plus `state.json`.
+- Logs go to `logs/`.
+
+To remove the tasks:
+```
+Unregister-ScheduledTask -TaskName work-reporter-morning, work-reporter-evening -Confirm:$false
+```

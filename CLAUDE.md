@@ -40,11 +40,23 @@ State lives in `./state.json`, shape `{"last_run": "<ISO8601 local time>"}`.
 **Kintone**
 - This week's weekly record: use the weekly-record tool from the config if there is one. Otherwise `getRecords` on the weekly app with `作成者 in (LOGINUSER()) order by 開始日 desc`, limit 1.
 
+## Morning plan (`/morning`)
+Today's goals come from these sources:
+- Yesterday's goal items not finished in yesterday's 業務.
+- Backlog tickets assigned to me in 処理中 / 未対応, with a due date this week or overdue.
+- My open PRs with review comments I haven't answered.
+
+Format them like 業務, using goal wording (`→　対応`, `→　完了予定`).
+
 ## Write rules
-- Without asking, write **only** today's `〇曜日の業務` field in this week's weekly record:
+- Without asking, write **only** these two fields in this week's weekly record:
+  - `/morning`: today's `本日の目標_N` (月=1 … 日=7).
+  - `/daily`: today's `〇曜日の業務`.
+- For either field:
   1. Read the current text and keep every existing line.
   2. Add new items only (dedupe by ticket key / PR number).
   3. Write the whole field back with `updateRecord`.
+- If nothing changed, write nothing.
 - Everything else is a draft until I say yes: other days, `週間目標`, Backlog comments, status changes, new tickets, and points entries.
 - Never change a Backlog status, assignee or due date unless I ask.
 - Never edit `開始日` or other date/key fields in Kintone (the browser derives them).

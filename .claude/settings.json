@@ -11,10 +11,17 @@
       "mcp__claude_ai_Kintone_MCP__get*",
       "mcp__claude_ai_Kintone_MCP__searchApps",
       "mcp__claude_ai_Kintone_MCP__jisou_*",
-      "Bash(git log:*)",
-      "Bash(git status:*)",
-      "Bash(git worktree list:*)",
-      "Bash(git branch:*)"
+      "Bash(git -C * log *)",
+      "Bash(git -C * status *)",
+      "Bash(git -C * worktree list*)",
+      "Bash(git -C * branch *)",
+      "Bash(git config user.name)"
+    ],
+    "deny": [
+      "Bash(git -C * push*)",
+      "Bash(git -C * commit*)",
+      "Bash(git -C * reset*)",
+      "Bash(git -C * checkout*)"
     ]
   }
 }

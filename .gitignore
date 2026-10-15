@@ -1,3 +1,4 @@
 config.local.md
 state.json
+logs/
 .claude/settings.local.json
